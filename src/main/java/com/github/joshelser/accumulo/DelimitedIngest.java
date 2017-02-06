@@ -20,6 +20,8 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -53,13 +55,14 @@ public class DelimitedIngest implements Callable<Integer> {
   public static final String ROW_ID = "!rowId";
   public static final char NEWLINE = '\n';
   public static final int INPUT_BUFFER_SIZE = 4096;
+  public static final char COMMA = ',';
 
   private final DelimitedIngestArguments args;
   private final Configuration conf;
 
   public DelimitedIngest(DelimitedIngestArguments args) {
     this.args = requireNonNull(args);
-    this.conf = new Configuration();
+    this.conf = args.getConfiguration();
   }
 
   public Integer call() {
@@ -87,7 +90,7 @@ public class DelimitedIngest implements Callable<Integer> {
       return 0;
     }
 
-    ColumnMapping mapping = parseColumnMapping();
+    FileMapping mapping = parseColumnMapping();
     BatchWriter writer;
     try {
       // TODO configurable BatchWriterConfig
@@ -99,7 +102,7 @@ public class DelimitedIngest implements Callable<Integer> {
 
     for (Path path : filesToProcess) {
       try {
-        processSinglePath(writer, mapping, path);
+        processSinglePathWithByteBuffer(writer, mapping, path);
       } catch (MutationsRejectedException e) {
         LOG.error("Failed to write data to Accumulo", e);
         return ReturnCodes.DATA_WRITE_FAILURE;
@@ -122,7 +125,14 @@ public class DelimitedIngest implements Callable<Integer> {
     String path = args.getClientConfigPath();
     if (null == path) {
       LOG.trace("Client configuration path not provided, loading default.");
-      return ClientConfiguration.loadDefault();
+      ClientConfiguration clientConf = ClientConfiguration.loadDefault();
+      if (null != args.getInstanceName()) {
+        clientConf = clientConf.withInstance(args.getInstanceName());
+      }
+      if (null != args.getZooKeepers()) {
+        clientConf = clientConf.withZkHosts(args.getZooKeepers());
+      }
+      return clientConf;
     }
 
     return new ClientConfiguration(path);
@@ -150,27 +160,39 @@ public class DelimitedIngest implements Callable<Integer> {
     return paths;
   }
 
-  private ColumnMapping parseColumnMapping() {
+  private FileMapping parseColumnMapping() {
     return null;
   }
 
-  private void processSinglePath(BatchWriter writer, ColumnMapping mapping, Path p) throws IOException, MutationsRejectedException {
+  private void processSinglePathWithByteBuffer(BatchWriter writer, FileMapping mapping, Path p) throws IOException, MutationsRejectedException {
     final FileSystem fs = p.getFileSystem(conf);
     FSDataInputStream dis = fs.open(p, INPUT_BUFFER_SIZE);
     ByteBuffer buffer = ByteBuffer.allocate(INPUT_BUFFER_SIZE);
-    dis.read(buffer);
+    int bytesRead = dis.read(buffer);
+    buffer.rewind();
+//    byte[] bytes = new byte[INPUT_BUFFER_SIZE];
+//    buffer.get(bytes);
+//    String value = new String(bytes);
+//    buffer.rewind();
     while (true) {
-      int startingOffset = buffer.position();
-      int length = buffer.limit();
+      CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
+      int startingOffset = charBuffer.position();
+      int length = charBuffer.limit();
       // Don't need to check 'remaining', length is guaranteed to be less than that.
-      for (int offset = startingOffset; offset < length; offset += 2) {
-        char currentCharacter = buffer.getChar(offset);
+      for (int offset = startingOffset; offset < length; offset++) {
+      //for (int offset = startingOffset; offset < length; offset += 2) {
+        char currentCharacter = charBuffer.get();
+        //char currentCharacter = buffer.getChar(offset);
         if (NEWLINE == currentCharacter) {
           // Collected a "line", ingest it
           writer.addMutation(parseLine(mapping, buffer, startingOffset, offset));
           // prepare for the next line
-          startingOffset = offset + 2;
+          startingOffset = offset + 1;
         }
+      }
+
+      if (0 == bytesRead) {
+        return;
       }
 
       // Leftovers to read.
@@ -180,21 +202,68 @@ public class DelimitedIngest implements Callable<Integer> {
         byte[] leftovers = new byte[length - startingOffset];
         buffer.get(leftovers);
         // Reset the buffer
-        buffer.reset();
+        buffer.rewind();
         // Put the leftovers at the beginning of the buffer
         buffer.put(leftovers);
 
-        // Fill the buffer with more data
-        dis.read(buffer);
+        // Fill the buffer with more data, accounting for the leftovers
+        bytesRead = dis.read(buffer) + leftovers.length;
+        buffer.rewind();
       }
     }
   }
 
-  private Mutation parseLine(ColumnMapping mapping, ByteBuffer buffer, int begin, int end) {
-    byte[] rowId = mapping.getRowId(buffer, begin, end);
-    Mutation m = new Mutation(rowId);
-    mapping.addColumns(m, buffer, begin, end);
-    return m;
+  private Mutation parseLine(FileMapping mapping, CharBuffer buffer, int begin, int end) {
+    RowMapping rowMapping = mapping.getRowMapping();
+    int rowOffset = rowMapping.getLogicalOffset();
+    int columnOffset = 0;
+    int last = begin;
+    // Construct the Mutation
+    Mutation mutation = null;
+    for (int offset = begin; offset < end; offset++) {
+      if (COMMA == buffer.get(offset)) {
+        if (columnOffset == rowOffset) {
+          // Set the start and end on the charbuffer
+          buffer.position(begin);
+          buffer.limit(offset);
+          // Encode that back into bytes
+          ByteBuffer bb = StandardCharsets.UTF_8.encode(buffer);
+          // Make a copy for Mutation
+          byte[] bytes = new byte[bb.limit() - bb.position()];
+          bb.get(bytes);
+          mutation = new Mutation(bytes);
+          break;
+        } else {
+          columnOffset++;
+        }
+      }
+    }
+    assert null != mutation;
+    buffer.position(begin);
+    last = begin;
+    // Build the Mutation
+    //
+    // Each "column" in the line of data
+    // TODO handle the line of data having fewer than expected columns
+    for (int logicalOffset = 0; logicalOffset < mapping.numMappings(); logicalOffset++) {
+      ColumnMapping colMapping = null;
+      if (logicalOffset != rowOffset) {
+        // Avoid calling getColumnMapping for the rowId offset
+        colMapping = mapping.getColumnMapping(logicalOffset);
+      }
+      // Read the data up to the next comma to build up each column, add it to the mutation
+      for (int offset = last; offset < end; offset++) {
+        if (COMMA == buffer.get(offset)) {
+          if (null != colMapping) {
+            colMapping.addColumns(mutation, buffer, last, offset - 1 - last);
+          }
+          last = offset + 1;
+          break;
+        } 
+      }
+    }
+
+    return mutation;
   }
   
   public static void main(String[] args) {

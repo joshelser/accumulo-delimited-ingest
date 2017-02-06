@@ -14,16 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.joshelser.accumulo;
+package com.github.joshelser.accumulo.impl;
 
-import java.nio.CharBuffer;
+import java.nio.ByteBuffer;
 
-import org.apache.accumulo.core.data.Mutation;
+import com.github.joshelser.accumulo.RowMapping;
 
 /**
  * 
  */
-public interface ColumnMapping extends Mapping {
+public class RowMappingImpl implements RowMapping {
 
-  public void addColumns(Mutation m, CharBuffer buffer, int offset, int length);
+  @Override
+  public byte[] getRowId(ByteBuffer buffer, int start, int end) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+  
 }

@@ -16,9 +16,13 @@
  */
 package com.github.joshelser.accumulo;
 
+import java.nio.ByteBuffer;
+
+import org.apache.accumulo.core.data.Mutation;
+
 /**
  * 
  */
-public class Mapping {
+public interface Mapping  {
   
 }

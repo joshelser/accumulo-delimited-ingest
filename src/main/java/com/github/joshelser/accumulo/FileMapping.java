@@ -16,14 +16,17 @@
  */
 package com.github.joshelser.accumulo;
 
-import java.nio.CharBuffer;
-
-import org.apache.accumulo.core.data.Mutation;
-
 /**
- * 
+ * Defines the mapping of column in the delimited file to the Accumulo table schema.
  */
-public interface ColumnMapping extends Mapping {
+public interface FileMapping {
 
-  public void addColumns(Mutation m, CharBuffer buffer, int offset, int length);
+  Mapping getMapping(int offset);
+
+  RowMapping getRowMapping();
+
+  ColumnMapping getColumnMapping(int offset);
+
+  int numMappings();
+
 }

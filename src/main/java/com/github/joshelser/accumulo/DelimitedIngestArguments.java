@@ -18,6 +18,8 @@ package com.github.joshelser.accumulo;
 
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
+
 import com.beust.jcommander.IValueValidator;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -57,6 +59,12 @@ public class DelimitedIngestArguments {
   @Parameter(names = {"-p", "--password"}, description = "The password for the Accumulo user", password = true)
   private String password;
 
+  @Parameter(names = {"--instance"}, description = "The Accumulo instance name")
+  private String instanceName;
+
+  @Parameter(names = {"-zk", "--zookeepers"}, description = "ZooKeeper servers used by Accumulo")
+  private String zooKeepers;
+
   @Parameter(names = {"-i", "--input"}, description = "The input data (files, directories, URIs)", required = true, variableArity = true)
   private List<String> input;
 
@@ -69,6 +77,8 @@ public class DelimitedIngestArguments {
   @Parameter(names = {"-c", "--columnMapping"}, description = "Comma-separated value of the mapping to the Accumulo schema", required = true,
       validateValueWith = ColumnMappingValidator.class)
   private String columnMapping = null;
+
+  private Configuration conf = new Configuration();
 
   public boolean isHelp() {
     return help;
@@ -92,6 +102,22 @@ public class DelimitedIngestArguments {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public String getInstanceName() {
+    return instanceName;
+  }
+
+  public void setInstanceName(String instanceName) {
+    this.instanceName = instanceName;
+  }
+
+  public String getZooKeepers() {
+    return zooKeepers;
+  }
+
+  public void setZooKeepers(String zooKeepers) {
+    this.zooKeepers = zooKeepers;
   }
 
   public List<String> getInput() {
@@ -124,5 +150,21 @@ public class DelimitedIngestArguments {
 
   public void setClientConfigPath(String clientConfigPath) {
     this.clientConfigPath = clientConfigPath;
+  }
+
+  public String getColumnMapping() {
+    return columnMapping;
+  }
+
+  public void setColumnMapping(String columnMapping) {
+    this.columnMapping = columnMapping;
+  }
+
+  public Configuration getConfiguration() {
+    return conf;
+  }
+
+  public void setConfiguration(Configuration conf) {
+    this.conf = conf;
   }
 }

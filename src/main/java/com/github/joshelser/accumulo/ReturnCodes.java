@@ -21,6 +21,10 @@ package com.github.joshelser.accumulo;
  */
 public interface ReturnCodes {
   /**
+   * The ingester returned normally.
+   */
+  int NORMAL = 0;
+  /**
    * Argument parsing was not successful.
    */
   int ARGUMENT_PARSING_FAILED = 1;
