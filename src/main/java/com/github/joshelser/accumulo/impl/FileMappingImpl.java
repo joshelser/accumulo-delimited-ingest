@@ -16,34 +16,67 @@
  */
 package com.github.joshelser.accumulo.impl;
 
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.apache.accumulo.core.data.Mutation;
-
+import com.github.joshelser.accumulo.ColumnMapping;
+import com.github.joshelser.accumulo.DelimitedIngest;
 import com.github.joshelser.accumulo.FileMapping;
 import com.github.joshelser.accumulo.Mapping;
+import com.github.joshelser.accumulo.RowMapping;
 
-/**
- * 
- */
 public class FileMappingImpl implements FileMapping {
+  private List<Mapping> mappings;
+  private RowMapping rowMapping;
+
+  public FileMappingImpl(String config) {
+    parse(config);
+  }
+
+  private void parse(String config) {
+    String[] entries = config.split(",");
+    mappings = new ArrayList<>(entries.length);
+    int rowIdOffset = -1;
+    int i = 0;
+    for (String entry : entries) {
+      entry = entry.trim();
+      Mapping mapping;
+      if (DelimitedIngest.ROW_ID.equals(entry)) {
+        rowIdOffset = i;
+        rowMapping = new RowMappingImpl(rowIdOffset);
+        mapping = rowMapping;
+      } else {
+        mapping = new ColumnMappingImpl(entry);
+      }
+      mappings.add(mapping);
+      i++;
+    }
+    if (null == rowMapping) {
+      throw new IllegalArgumentException("Did not find rowId mapping in '" + config + "'");
+    }
+  }
 
   @Override
   public Mapping getMapping(int offset) {
-    // TODO Auto-generated method stub
-    return null;
+    return mappings.get(offset);
   }
 
   @Override
-  public byte[] getRowId(ByteBuffer buffer, int start, int end) {
-    // TODO Auto-generated method stub
-    return null;
+  public RowMapping getRowMapping() {
+    return rowMapping;
   }
 
   @Override
-  public void addColumns(Mutation m, ByteBuffer buffer, int start, int end) {
-    // TODO Auto-generated method stub
-    
+  public ColumnMapping getColumnMapping(int offset) {
+    Mapping mapping = mappings.get(offset);
+    if (!(mapping instanceof ColumnMapping)) {
+      throw new IllegalArgumentException("Mapping at offset " + offset + " is not a ColumnMapping");
+    }
+    return (ColumnMapping) mapping;
   }
-  
+
+  @Override
+  public int numMappings() {
+    return mappings.size();
+  }
 }

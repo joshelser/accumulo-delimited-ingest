@@ -46,6 +46,8 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.joshelser.accumulo.impl.FileMappingImpl;
+
 /**
  * Ingests records read from files into an Accumulo table.
  */
@@ -161,7 +163,7 @@ public class DelimitedIngest implements Callable<Integer> {
   }
 
   private FileMapping parseColumnMapping() {
-    return null;
+    return new FileMappingImpl(args.getColumnMapping());
   }
 
   private void processSinglePathWithByteBuffer(BatchWriter writer, FileMapping mapping, Path p) throws IOException, MutationsRejectedException {
@@ -185,7 +187,7 @@ public class DelimitedIngest implements Callable<Integer> {
         //char currentCharacter = buffer.getChar(offset);
         if (NEWLINE == currentCharacter) {
           // Collected a "line", ingest it
-          writer.addMutation(parseLine(mapping, buffer, startingOffset, offset));
+          writer.addMutation(parseLine(mapping, charBuffer, startingOffset, offset));
           // prepare for the next line
           startingOffset = offset + 1;
         }
@@ -215,32 +217,12 @@ public class DelimitedIngest implements Callable<Integer> {
 
   private Mutation parseLine(FileMapping mapping, CharBuffer buffer, int begin, int end) {
     RowMapping rowMapping = mapping.getRowMapping();
-    int rowOffset = rowMapping.getLogicalOffset();
-    int columnOffset = 0;
-    int last = begin;
     // Construct the Mutation
-    Mutation mutation = null;
-    for (int offset = begin; offset < end; offset++) {
-      if (COMMA == buffer.get(offset)) {
-        if (columnOffset == rowOffset) {
-          // Set the start and end on the charbuffer
-          buffer.position(begin);
-          buffer.limit(offset);
-          // Encode that back into bytes
-          ByteBuffer bb = StandardCharsets.UTF_8.encode(buffer);
-          // Make a copy for Mutation
-          byte[] bytes = new byte[bb.limit() - bb.position()];
-          bb.get(bytes);
-          mutation = new Mutation(bytes);
-          break;
-        } else {
-          columnOffset++;
-        }
-      }
-    }
+    Mutation mutation = rowMapping.getRowId(buffer, begin, end);
+    int rowOffset = rowMapping.getLogicalOffset();
+    int last = begin;
     assert null != mutation;
-    buffer.position(begin);
-    last = begin;
+
     // Build the Mutation
     //
     // Each "column" in the line of data

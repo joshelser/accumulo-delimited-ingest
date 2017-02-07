@@ -16,18 +16,15 @@
  */
 package com.github.joshelser.accumulo;
 
-import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 
 import org.apache.accumulo.core.data.Mutation;
 
-/**
- * 
- */
 public interface RowMapping extends Mapping {
   /**
    * @return The offset into the delimited value for the rowId
    */
   public int getLogicalOffset();
 
-  public byte[] getRowId(ByteBuffer buffer, int start, int end);
+  public Mutation getRowId(CharBuffer buffer, int start, int end);
 }

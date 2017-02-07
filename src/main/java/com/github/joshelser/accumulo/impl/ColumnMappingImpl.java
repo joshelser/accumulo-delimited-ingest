@@ -16,21 +16,33 @@
  */
 package com.github.joshelser.accumulo.impl;
 
-import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.accumulo.core.data.Mutation;
 
 import com.github.joshelser.accumulo.ColumnMapping;
 
-/**
- * 
- */
 public class ColumnMappingImpl implements ColumnMapping {
+  private final byte[] family;
+  private final byte[] qualifier;
+
+  public ColumnMappingImpl(String columnDef) {
+    int offset = columnDef.indexOf(':');
+    if (offset == -1) {
+      family = columnDef.getBytes(StandardCharsets.UTF_8);
+      qualifier = new byte[0];
+    } else {
+      family = columnDef.substring(0, offset).getBytes(StandardCharsets.UTF_8);
+      qualifier = columnDef.substring(offset + 1).getBytes(StandardCharsets.UTF_8);
+    }
+  }
 
   @Override
-  public void addColumns(Mutation m, ByteBuffer buffer, int start, int end) {
-    // TODO Auto-generated method stub
-    
+  public void addColumns(Mutation m, CharBuffer buffer, int offset, int length) {
+    char[] data = new char[length];
+    buffer.get(data, offset, length);
+    String s = new String(data);
+    m.put(family, qualifier, s.getBytes(StandardCharsets.UTF_8));
   }
-  
 }

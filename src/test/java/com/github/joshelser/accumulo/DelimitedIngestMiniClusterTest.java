@@ -101,7 +101,7 @@ public class DelimitedIngestMiniClusterTest {
 
     ARGS.setTableName(tableName);
     ARGS.setInput(Collections.singletonList(csvData.getName()));
-    ARGS.setColumnMapping(":rowId,f1:q2,f1:q3,f1:q3,f1:q4,f1:q5,f1:q6,f1:q7,f1:q8,f1:q9");
+    ARGS.setColumnMapping(DelimitedIngest.ROW_ID + ",f1:q2,f1:q3,f1:q3,f1:q4,f1:q5,f1:q6,f1:q7,f1:q8,f1:q9");
 
     DelimitedIngest ingester = new DelimitedIngest(ARGS);
     assertEquals(ReturnCodes.NORMAL, ingester.call().intValue());
