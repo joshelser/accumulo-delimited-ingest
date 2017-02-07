@@ -57,6 +57,7 @@ public class RowMappingImpl implements RowMapping {
       throw new IllegalArgumentException("Could not find mapping for rowId in row");
     } finally {
       buffer.position(start);
+      buffer.limit(end);
     }
   }
 

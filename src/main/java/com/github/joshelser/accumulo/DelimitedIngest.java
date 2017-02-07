@@ -172,19 +172,13 @@ public class DelimitedIngest implements Callable<Integer> {
     ByteBuffer buffer = ByteBuffer.allocate(INPUT_BUFFER_SIZE);
     int bytesRead = dis.read(buffer);
     buffer.rewind();
-//    byte[] bytes = new byte[INPUT_BUFFER_SIZE];
-//    buffer.get(bytes);
-//    String value = new String(bytes);
-//    buffer.rewind();
     while (true) {
       CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
       int startingOffset = charBuffer.position();
       int length = charBuffer.limit();
       // Don't need to check 'remaining', length is guaranteed to be less than that.
       for (int offset = startingOffset; offset < length; offset++) {
-      //for (int offset = startingOffset; offset < length; offset += 2) {
         char currentCharacter = charBuffer.get();
-        //char currentCharacter = buffer.getChar(offset);
         if (NEWLINE == currentCharacter) {
           // Collected a "line", ingest it
           writer.addMutation(parseLine(mapping, charBuffer, startingOffset, offset));
@@ -237,7 +231,7 @@ public class DelimitedIngest implements Callable<Integer> {
       for (int offset = last; offset < end; offset++) {
         if (COMMA == buffer.get(offset)) {
           if (null != colMapping) {
-            colMapping.addColumns(mutation, buffer, last, offset - 1 - last);
+            colMapping.addColumns(mutation, buffer, last, offset - last);
           }
           last = offset + 1;
           break;

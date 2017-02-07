@@ -41,8 +41,12 @@ public class ColumnMappingImpl implements ColumnMapping {
   @Override
   public void addColumns(Mutation m, CharBuffer buffer, int offset, int length) {
     char[] data = new char[length];
-    buffer.get(data, offset, length);
-    String s = new String(data);
-    m.put(family, qualifier, s.getBytes(StandardCharsets.UTF_8));
+    try {
+      buffer.get(data, 0, length);
+      String s = new String(data);
+      m.put(family, qualifier, s.getBytes(StandardCharsets.UTF_8));
+    } finally {
+      buffer.position(offset);
+    }
   }
 }
