@@ -72,6 +72,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <relocated.package>com.github.joshelser.accumulo-delimited-ingest.shaded</relocated.package>
     <slf4j.version>1.7.22</slf4j.version>
     <surefire-plugin.version>2.19.1</surefire-plugin.version>
     <univocity.version>1.3.0</univocity.version>
@@ -226,6 +227,100 @@
           <releaseProfiles>release</releaseProfiles>
           <goals>deploy</goals>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <relocations>
+                <relocation>
+                  <pattern>com.beust</pattern>
+                  <shadedPattern>${relocated.package}.com.beust</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google</pattern>
+                  <shadedPattern>${relocated.package}.com.google</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.sun</pattern>
+                  <shadedPattern>${relocated.package}.com.sun</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.thoughtworks</pattern>
+                  <shadedPattern>${relocated.package}.com.thoughtworks</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.univocity</pattern>
+                  <shadedPattern>${relocated.package}.com.univocity</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>hidden.org.codehaus</pattern>
+                  <shadedPattern>${relocated.package}.hidden.org.codehaus</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>javax</pattern>
+                  <shadedPattern>${relocated.package}.javax</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>jline</pattern>
+                  <shadedPattern>${relocated.package}.jline</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.aopalliance</pattern>
+                  <shadedPattern>${relocated.package}.org.aopalliance</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache</pattern>
+                  <shadedPattern>${relocated.package}.org.apache</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.codehaus</pattern>
+                  <shadedPattern>${relocated.package}.org.codehaus</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.fusesource</pattern>
+                  <shadedPattern>${relocated.package}.org.fusesource</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.glassfish</pattern>
+                  <shadedPattern>${relocated.package}.org.glassfish</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.jboss</pattern>
+                  <shadedPattern>${relocated.package}.org.jboss</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.mortbay</pattern>
+                  <shadedPattern>${relocated.package}.org.mortbay</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.objectweb</pattern>
+                  <shadedPattern>${relocated.package}.org.objectweb</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.tukaani</pattern>
+                  <shadedPattern>${relocated.package}.org.tukaani</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.xerial</pattern>
+                  <shadedPattern>${relocated.package}.org.xerial</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.znerd</pattern>
+                  <shadedPattern>${relocated.package}.org.znerd</shadedPattern>
+                </relocation>
+              </relocations>
+							<shadedArtifactAttached>true</shadedArtifactAttached>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
     <resources>
