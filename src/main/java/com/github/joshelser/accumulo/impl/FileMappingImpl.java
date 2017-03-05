@@ -24,8 +24,6 @@ import com.github.joshelser.accumulo.DelimitedIngest;
 import com.github.joshelser.accumulo.FileMapping;
 import com.github.joshelser.accumulo.Mapping;
 import com.github.joshelser.accumulo.RowMapping;
-import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
 
 public class FileMappingImpl implements FileMapping {
   private List<Mapping> mappings;

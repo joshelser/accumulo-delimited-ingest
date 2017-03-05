@@ -24,28 +24,49 @@ public interface ReturnCodes {
    * The ingester returned normally.
    */
   int NORMAL = 0;
+
   /**
    * Argument parsing was not successful.
    */
   int ARGUMENT_PARSING_FAILED = 1;
+
   /**
    * The user requested the help argument. It should be printed, and then execution terminated.
    */
   int HELP_REQUESTED = 2;
+
   /**
    * An unhandled exception was thrown and execution was terminated.
    */
   int UNHANDLED_FAILURE = 3;
 
+  /**
+   * The failure to parse the Accumulo client configuation file.
+   */
   int CLIENT_CONFIG_PARSE_FAILURE = 4;
 
+  /**
+   * An Accumulo authentication failure.
+   */
   int AUTHENTICATION_FAILURE = 5;
 
+  /**
+   * Failure to parse the input file specification.
+   */
   int INPUT_PATH_PARSING = 6;
 
+  /**
+   * Failure to process a given input file.
+   */
   int INPUT_PATH_PROCESSING = 7;
 
+  /**
+   * Failure to write processed data to Accumulo.
+   */
   int DATA_WRITE_FAILURE = 8;
 
+  /**
+   * Failure to instantiate the Accumulo BatchWriter.
+   */
   int BATCH_WRITER_CREATION_FAILURE = 9;
 }

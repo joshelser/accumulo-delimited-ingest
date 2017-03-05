@@ -16,12 +16,10 @@
  */
 package com.github.joshelser.accumulo;
 
-import java.nio.CharBuffer;
-
 import org.apache.accumulo.core.data.Mutation;
 
 /**
- * 
+ * Inteface to convert a CSV column into an Accumulo column.
  */
 public interface ColumnMapping extends Mapping {
 

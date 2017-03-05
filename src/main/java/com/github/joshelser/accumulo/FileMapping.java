@@ -21,12 +21,23 @@ package com.github.joshelser.accumulo;
  */
 public interface FileMapping {
 
+  /**
+   * Returns the {@link Mapping} for the column with the given offset for this CSV file.
+   */
   Mapping getMapping(int offset);
 
+  /**
+   * Returns the {@link RowMapping} for the CSV file.
+   */
   RowMapping getRowMapping();
 
+  /**
+   * Returns the {@link ColumnMapping} for the CSV file at the current offset.
+   */
   ColumnMapping getColumnMapping(int offset);
 
+  /**
+   * Returns the number of mappings for this CSV file.
+   */
   int numMappings();
-
 }

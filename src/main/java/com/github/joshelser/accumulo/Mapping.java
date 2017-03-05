@@ -17,7 +17,7 @@
 package com.github.joshelser.accumulo;
 
 /**
- * 
+ * Base interface for converting CSV data into Accumulo records.
  */
 public interface Mapping  {
   
