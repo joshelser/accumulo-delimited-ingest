@@ -28,7 +28,7 @@ import com.beust.jcommander.ParameterException;
  * POJO encapsulating command-line arguments for {@link DelimitedIngest}.
  */
 public class DelimitedIngestArguments {
-  private static class ColumnMappingValidator implements IValueValidator<String> {
+  public static class ColumnMappingValidator implements IValueValidator<String> {
     @Override
     public void validate(String name, String value) throws ParameterException {
       String[] elements = value.split(",");
@@ -50,7 +50,7 @@ public class DelimitedIngestArguments {
   @Parameter(names = {"-h", "--help", "-help"}, help = true)
   private boolean help = false;
 
-  @Parameter(names = {"-c", "--config"}, description = "Path to the Accumulo client configuration file")
+  @Parameter(names = {"--config"}, description = "Path to the Accumulo client configuration file")
   private String clientConfigPath;
 
   @Parameter(names = {"-u", "--username"}, description = "The user to connect to Accumulo as", required = true)

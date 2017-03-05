@@ -19,6 +19,7 @@ package com.github.joshelser.accumulo.impl;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import org.apache.accumulo.core.data.Mutation;
 
@@ -41,6 +42,8 @@ public class ColumnMappingImpl implements ColumnMapping {
 
   @Override
   public void addColumns(Mutation m, String columnValue) {
+    Objects.requireNonNull(m, "Mutation was null");
+    Objects.requireNonNull(columnValue, "Value was null");
     m.put(family, qualifier, columnValue.getBytes(UTF_8));
   }
 }

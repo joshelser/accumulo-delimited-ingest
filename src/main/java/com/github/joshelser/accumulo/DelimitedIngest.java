@@ -162,9 +162,9 @@ public class DelimitedIngest implements Callable<Integer> {
   private List<Path> convertInputToPaths() throws IOException {
     List<String> inputs = args.getInput();
     List<Path> paths = new ArrayList<>(inputs.size());
-    FileSystem fs = FileSystem.get(conf);
     for (String input : inputs) {
       Path p = new Path(input);
+      FileSystem fs = p.getFileSystem(conf);
       FileStatus fstat = fs.getFileStatus(p);
       if (fstat.isFile()) {
         paths.add(p);
@@ -216,7 +216,12 @@ public class DelimitedIngest implements Callable<Integer> {
       }
       // Avoid calling getColumnMapping for the rowId offset
       ColumnMapping colMapping = mapping.getColumnMapping(logicalOffset);
-      colMapping.addColumns(mutation, line[logicalOffset]);
+      String value = line[logicalOffset];
+      if (null == value) {
+        LOG.debug("Saw null value at column offset {}", logicalOffset);
+        continue;
+      }
+      colMapping.addColumns(mutation, value);
     }
 
     return mutation;

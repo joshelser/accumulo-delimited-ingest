@@ -31,6 +31,7 @@ public class DelimitedIngestCliRunner {
     ArgumentParsingResult parseResult = parser.parse(args);
     switch (parseResult.getResult()) {
       case FAILED:
+        LOG.error("Failed to parse command-line arguments", parseResult.getException());
         System.exit(ReturnCodes.ARGUMENT_PARSING_FAILED);
         return;
       case TERMINATE:
