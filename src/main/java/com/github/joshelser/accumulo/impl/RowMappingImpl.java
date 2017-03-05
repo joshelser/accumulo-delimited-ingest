@@ -16,13 +16,8 @@
  */
 package com.github.joshelser.accumulo.impl;
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
-
 import org.apache.accumulo.core.data.Mutation;
 
-import com.github.joshelser.accumulo.DelimitedIngest;
 import com.github.joshelser.accumulo.RowMapping;
 
 public class RowMappingImpl implements RowMapping {
@@ -33,32 +28,8 @@ public class RowMappingImpl implements RowMapping {
   }
 
   @Override
-  public Mutation getRowId(CharBuffer buffer, int start, int end) {
-    try {
-      int columnOffset = 0;
-      // Construct the Mutation
-      for (int offset = start; offset < end; offset++) {
-        if (DelimitedIngest.COMMA == buffer.get(offset)) {
-          if (columnOffset == logicalOffset) {
-            // Set the start and end on the charbuffer
-            buffer.position(start);
-            buffer.limit(offset);
-            // Encode that back into bytes
-            ByteBuffer bb = StandardCharsets.UTF_8.encode(buffer);
-            // Make a copy for Mutation
-            byte[] bytes = new byte[bb.limit() - bb.position()];
-            bb.get(bytes);
-            return new Mutation(bytes);
-          } else {
-            columnOffset++;
-          }
-        }
-      }
-      throw new IllegalArgumentException("Could not find mapping for rowId in row");
-    } finally {
-      buffer.position(start);
-      buffer.limit(end);
-    }
+  public Mutation getRowId(String[] row) {
+    return new Mutation(row[logicalOffset]);
   }
 
   @Override

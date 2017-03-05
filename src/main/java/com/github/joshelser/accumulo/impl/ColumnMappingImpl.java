@@ -16,7 +16,8 @@
  */
 package com.github.joshelser.accumulo.impl;
 
-import java.nio.CharBuffer;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.nio.charset.StandardCharsets;
 
 import org.apache.accumulo.core.data.Mutation;
@@ -39,14 +40,7 @@ public class ColumnMappingImpl implements ColumnMapping {
   }
 
   @Override
-  public void addColumns(Mutation m, CharBuffer buffer, int offset, int length) {
-    char[] data = new char[length];
-    try {
-      buffer.get(data, 0, length);
-      String s = new String(data);
-      m.put(family, qualifier, s.getBytes(StandardCharsets.UTF_8));
-    } finally {
-      buffer.position(offset);
-    }
+  public void addColumns(Mutation m, String columnValue) {
+    m.put(family, qualifier, columnValue.getBytes(UTF_8));
   }
 }

@@ -16,8 +16,6 @@
  */
 package com.github.joshelser.accumulo;
 
-import java.nio.CharBuffer;
-
 import org.apache.accumulo.core.data.Mutation;
 
 public interface RowMapping extends Mapping {
@@ -26,5 +24,5 @@ public interface RowMapping extends Mapping {
    */
   public int getLogicalOffset();
 
-  public Mutation getRowId(CharBuffer buffer, int start, int end);
+  public Mutation getRowId(String[] row);
 }

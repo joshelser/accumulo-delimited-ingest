@@ -25,5 +25,5 @@ import org.apache.accumulo.core.data.Mutation;
  */
 public interface ColumnMapping extends Mapping {
 
-  public void addColumns(Mutation m, CharBuffer buffer, int offset, int length);
+  public void addColumns(Mutation m, String columnValue);
 }

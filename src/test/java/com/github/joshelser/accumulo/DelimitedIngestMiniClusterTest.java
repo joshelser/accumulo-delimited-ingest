@@ -24,9 +24,18 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.SortedMap;
 
+import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.user.WholeRowIterator;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.impl.MiniAccumuloClusterImpl;
 import org.apache.accumulo.minicluster.impl.MiniAccumuloConfigImpl;
 import org.apache.commons.io.FileUtils;
@@ -101,10 +110,41 @@ public class DelimitedIngestMiniClusterTest {
 
     ARGS.setTableName(tableName);
     ARGS.setInput(Collections.singletonList(csvData.getName()));
-    ARGS.setColumnMapping(DelimitedIngest.ROW_ID + ",f1:q2,f1:q3,f1:q3,f1:q4,f1:q5,f1:q6,f1:q7,f1:q8,f1:q9");
+    ARGS.setColumnMapping(DelimitedIngest.ROW_ID + ",f1:q1,f1:q2,f1:q3,f1:q4,f1:q5,f1:q6,f1:q7,f1:q8,f1:q9");
 
     DelimitedIngest ingester = new DelimitedIngest(ARGS);
     assertEquals(ReturnCodes.NORMAL, ingester.call().intValue());
+
+    BatchScanner bs = conn.createBatchScanner(tableName, new Authorizations(), 4);
+    bs.addScanIterator(new IteratorSetting(50, WholeRowIterator.class));
+    bs.setRanges(Collections.singleton(new Range()));
+    long numRows = 0;
+    try {
+      for (Entry<Key,Value> entry : bs) {
+        SortedMap<Key,Value> row = WholeRowIterator.decodeRow(entry.getKey(), entry.getValue());
+        // One "column" is the rowId
+        assertEquals("Unexpected columns in row: " + row, NUM_COLUMNS - 1, row.size());
+        int csvColumns = 0;
+        for (Entry<Key,Value> rowEntry : row.entrySet()) {
+          Key k = rowEntry.getKey();
+          Value v = rowEntry.getValue();
+          if (csvColumns == 0) {
+            assertEquals("column" + String.format("%05d", numRows) + "_" + csvColumns, k.getRow().toString());
+            csvColumns++;
+          }
+          assertEquals("f1", k.getColumnFamily().toString());
+          assertEquals("q"+csvColumns, k.getColumnQualifier().toString());
+          assertEquals("column" + String.format("%05d", numRows) + "_" + csvColumns, v.toString());
+          csvColumns++;
+        }
+        numRows++;
+      }
+    } finally {
+      if (null != bs) {
+        bs.close();
+      }
+    }
+    assertEquals(NUM_ROWS, numRows);
   }
 
   private File generateCsvData() throws IOException {
@@ -126,7 +166,7 @@ public class DelimitedIngestMiniClusterTest {
           if (sb.length() > 0) {
             sb.append(COMMA);
           }
-          sb.append("column").append(i).append("_").append(j);
+          sb.append("column").append(String.format("%05d", i)).append("_").append(j);
         }
         sb.append(NEWLINE);
         fos.write(sb.toString().getBytes(UTF_8));
